@@ -1,12 +1,5 @@
 #!/bin/bash
 
-
-# This script will count number of base pairs for desired number of genomes in a directory
-# Mostly a wrapper from the Enveomics tools
-# Author: Alex Chase
-# Date: 2015-09-22
-# Usage: count-bp-in-seqs.sh *.fasta 
-
 FILES=$1
 
 

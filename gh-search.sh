@@ -1,16 +1,10 @@
 #!/bin/bash
 
-# This script searches a set of genomes for GH/CBM genes that target polymeric carbohydrates
-# Author: Alex Chase
-# Date: 2016-01-04
-# Usage: bash gh-search.sh -i .fasta [.fna|.fa] -t [1-8] -c [0|1]
-
 ####################	DISCLAIMER!!!	####################
 # must have:
 # HMMer installed and 
 # Pfam reference database
 # installed and in your path for this to work!!!
-# if you want to have the ability to filter HMMer results, download hmmer2filtered_best.py as well
 ####################	DISCLAIMER!!!	####################
 
 
@@ -18,7 +12,7 @@
 usage(){
 	echo "$(basename "$0") [-h] 
 
-This program will search annotated genomes against the Pfam reference database and subset known GH/CBM genes
+This program will search annotated genomes against the Pfam reference database and subset known GH/CB genes
 
 All files in current directory with the same file extension MUST be same format
 
@@ -28,7 +22,7 @@ correct use:
 where:
 	--help or -h  			show this help text
 	--input or -i 			input files with extension for genomes (either .fna|.faa|.fasta|.fa )
-	--conservative or -c 	[0 or 1] enable filtering of predicted Pfam proteins to reduce false positives [0 = no; 1 = yes] (default=0)
+	--conservative or -c 	[0 or 1] enable filtering of predicted Pfam proteins to reduce false positives [0 = no; 1 = yes] (default=1)
 	--thread or -t 			number of threads to use 
 					(i.e. how many pairwise comparisons can be run at once) (default=8)"
 }
@@ -41,7 +35,7 @@ fi
 
 # default thread option
 THREAD=8
-FILTER=0
+FILTER=1
 
 # get user input for other parameters
 while test $# -gt 0; do
@@ -57,7 +51,7 @@ while test $# -gt 0; do
 						shift
 						;;
 				--input*)
-						export files=`echo $1 | sed -e 's/^[^=]*=//g'`
+						export files=`echo $1 | sed -e 's/[=]*=//g'`
 						shift
 						;;
 				-c)
@@ -71,7 +65,7 @@ while test $# -gt 0; do
 						shift
 						;;
 				--conservative*)
-						export FILTER=`echo $1 | sed -e 's/^[^=]*=//g'`
+						export FILTER=`echo $1 | sed -e 's/[=]*=//g'`
 						shift
 						;;
 				-t)
@@ -85,7 +79,7 @@ while test $# -gt 0; do
 						shift
 						;;
 				--thread*)
-						export THREAD=`echo $1 | sed -e 's/^[^=]*=//g'`
+						export THREAD=`echo $1 | sed -e 's/[=]*=//g'`
 						shift
 						;;
 				*)
@@ -95,7 +89,7 @@ while test $# -gt 0; do
 done
 
 FILES='*'$files
-PFAMBASE=/Users/abchase/software/PfamScan
+PFAMBASE=/Users/alexchase/software/PfamScan
 
 # get current working directory and make temporary working file, remove older files
 REFDIR=$PWD
@@ -117,7 +111,7 @@ COUNT=$(ls $TEMP/$FILES | wc -l)
 echo -e "\nRunning $METHOD on $COUNT genomes"
 echo -e "Starting annotation with HMMer. 
 This step can take a while. 
-A rough estimate for Pfam annotation of a genome ~3 Mbp is ~10 min per genome.\n"
+A rough estimate for Pfam annotation of a genome ~3 bp is ~10 min per genome.\n"
 
 # set thread limit for parallel processes
 # set the max background jobs to be run at a given time to not overkill processor
@@ -140,7 +134,17 @@ function max_bg_procs {
 }
 
 function sortoutput {
-	for i in *.dat
+	
+	if [ "$FILTER" -eq "1" ]; then
+		checkout=$(echo "best")
+	elif [ "$FILTER" -eq "0" ]; then
+		checkout=$(echo "pfam")	
+	else
+		echo "Not a valid option for -c"
+		exit 1
+	fi
+
+	for i in *${checkout}.dat
 	do
 		gen1=$(echo $i | rev | cut -f3- -d'.' | rev)
 		cp $i $PFAMOUT
@@ -246,7 +250,7 @@ heatmap.2(allD, col = hm.colors, scale='none',
 dev.off();
 final <- cbind(TOTAL = rowSums(gh_all_genomes[, -1]), gh_all_genomes);
 write.table(final, file = '${OUTFILTER}total-gh-data.csv', sep = ',', quote=F, row.names=F);
-" | R --vanilla
+" | R --vanilla > summary.log 2>&1
 
 rm *.condensed.txt
 rm -r $TEMP

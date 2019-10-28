@@ -17,17 +17,12 @@
 
 usage(){
 	echo "$(basename "$0") [-h] 
-
 This program to calculate pairwise ANI or AAI values for all genomes in current directory and output matrix
-
 All files in current directory with the same file extension MUST be same format
 (i.e. either all nucleotide or all amino acid)
-
 In other words, you cannot have .fa files that represent both nucleotide genomes and translated amino acid genomes
-
 correct use:
 	ani-aai-matrix.sh -i .fasta [.fna|.fa] -m [aai|ani] -t [1-8]
-
 where:
 	--help or -h  			show this help text
 	--input or -i 			input files with extension for genomes (either .fna|.faa|.fasta|.fa )
@@ -98,7 +93,6 @@ done
 
 FILES='*'$files
 
-
 # program the ANI or AAI process!
 
 # get current working directory and make temporary working file, remove older files
@@ -152,14 +146,14 @@ function aai {
 	for f in $FILES
 	do
 		# to get names of genomes without file extension
-		gen1=$(echo $f | rev | cut -f 2- -d '.' | rev)
+		gen1=$( basename $f $files )
 		echo "Starting genome ${gen1} ..."
 
 		for h in $FILES
 		do
 			max_bg_procs $THREAD
 
-			gen2=$(echo $h | rev | cut -f 2- -d '.' | rev)
+			gen2=$( basename $h $files )
 			# no need to do pairwise if reciprocal ANI values were aleady calculated
 			if grep -Fq "${gen2};${gen1}" ${REFDIR}/total.txt; then
 				continue
@@ -195,14 +189,14 @@ function ani {
 	for f in $FILES
 	do
 		# to get names of genomes without file extension
-		gen1=$(echo $f | rev | cut -f 2- -d '.' | rev)
+		gen1=$( basename $f $files )
 		echo "Starting genome ${gen1} ..."
 
 		for h in $FILES
 		do
 			max_bg_procs $THREAD
 
-			gen2=$(echo $h | rev | cut -f 2- -d '.' | rev)
+			gen2=$( basename $h $files )
 			# no need to do pairwise if reciprocal ANI values were aleady calculated
 			if grep -Fq "${gen2};${gen1}" ${REFDIR}/total.txt; then
 				continue
@@ -302,9 +296,8 @@ heatmap.2(mat,scale='none',breaks=breaks,col=hm.colors,
           trace = 'none', dendrogram = 'row', 
           margin=c(5,10), na.rm = T, na.color = 'white');
 dev.off();
-" | R --vanilla
+" | R --vanilla > summary.log 2>&1
 
 rm -rf $TEMP
-
 
 
